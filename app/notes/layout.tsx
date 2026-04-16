@@ -2,14 +2,12 @@ import type { ReactNode } from 'react'
 
 interface Props {
   children: ReactNode
-  modal: ReactNode
 }
 
-export default function NotesLayout({ children, modal }: Props) {
+export default function NotesLayout({ children}: Props) {
   return (
     <>
       {children}
-      {modal}
     </>
   )
 }
