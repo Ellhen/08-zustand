@@ -4,7 +4,7 @@ import { fetchNotes } from '@/lib/api'
 import { getQueryClient } from '@/lib/getQueryClient'
 import HydrateClient from '@/lib/hydration'
 import type { NoteTag } from '@/types/note'
-import NotesClient from '../../Notes.client'
+import NotesClient from './Notes.client'
 
 const PER_PAGE = 12
 const validTags: NoteTag[] = ['Todo', 'Work', 'Personal', 'Meeting', 'Shopping']

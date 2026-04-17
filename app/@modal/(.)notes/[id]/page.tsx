@@ -2,7 +2,7 @@ import { dehydrate } from '@tanstack/react-query'
 import { fetchNoteById } from '@/lib/api'
 import { getQueryClient } from '@/lib/getQueryClient'
 import HydrateClient from '@/lib/hydration'
-import NotePreview from '@/app/@modal/(.)notes/[id]/NotePreview.client'
+import NotePreview from './NotePreview.client'
 
 interface Props {
   params: Promise<{ id: string }>

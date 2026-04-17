@@ -15,6 +15,7 @@ import { NoteForm } from '@/components/NoteForm/NoteForm'
 
 import css from './NotesPage.module.css'
 
+
 const PER_PAGE = 12
 
 interface Props {
