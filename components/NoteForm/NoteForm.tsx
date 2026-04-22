@@ -1,10 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { createNote } from '@/lib/api'
-import { useNoteStore, initialDraft } from '@/lib/store/noteStore'
+import { useNoteStore } from '@/lib/store/noteStore'
 import { NoteTag } from '@/types/note'
 import css from './NoteForm.module.css'
 
@@ -14,13 +14,19 @@ type NoteFormProps = {
 
 export default function NoteForm({ onClose }: NoteFormProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { draft, setDraft, clearDraft } = useNoteStore()
 
-  useEffect(() => {
-    if (!draft) {
-      setDraft(initialDraft)
+  const createNoteMutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: async () => {
+      clearDraft()
+      await queryClient.invalidateQueries({ queryKey: ['notes'] })
+
+      if (onClose) onClose()
+      else router.back()
     }
-  }, [draft, setDraft])
+  })
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -31,17 +37,12 @@ export default function NoteForm({ onClose }: NoteFormProps) {
 
   const handleSubmit = async (formData: FormData) => {
     const data = {
-      title: formData.get('title') as string,
-      content: formData.get('content') as string,
-      tag: formData.get('tag') as NoteTag
+      title: String(formData.get('title') ?? ''),
+      content: String(formData.get('content') ?? ''),
+      tag: String(formData.get('tag') ?? 'Todo') as NoteTag
     }
 
-    await createNote(data)
-
-    clearDraft()
-
-    if (onClose) onClose()
-    else router.back()
+    await createNoteMutation.mutateAsync(data)
   }
 
   return (
@@ -88,9 +89,10 @@ export default function NoteForm({ onClose }: NoteFormProps) {
       <div className={`${css.actions} flex gap-3`}>
         <button
           type="submit"
-          className="cursor-pointer rounded border border-blue-600 px-3 py-1.5 text-base text-blue-600 hover:bg-blue-700 hover:text-white"
+          disabled={createNoteMutation.isPending}
+          className="cursor-pointer rounded border border-blue-600 px-3 py-1.5 text-base text-blue-600 hover:bg-blue-700 hover:text-white disabled:opacity-50"
         >
-          Create note
+          {createNoteMutation.isPending ? 'Creating...' : 'Create note'}
         </button>
 
         <button

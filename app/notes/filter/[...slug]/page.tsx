@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { dehydrate } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 import { fetchNotes } from '@/lib/api'
@@ -12,6 +13,54 @@ const validTags: NoteTag[] = ['Todo', 'Work', 'Personal', 'Meeting', 'Shopping']
 interface Props {
   params: Promise<{ slug: string[] }>
   searchParams: Promise<{ page?: string; search?: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const rawTag = slug[0]
+
+  if (!rawTag) {
+    return {
+      title: 'Notes | NoteHub',
+      description: 'Browse notes in NoteHub.',
+      openGraph: {
+        title: 'Notes | NoteHub',
+        description: 'Browse notes in NoteHub.',
+        url: '/notes/filter/all',
+        images: [
+          {
+            url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
+            width: 1200,
+            height: 630,
+            alt: 'NoteHub notes filter'
+          }
+        ]
+      }
+    }
+  }
+
+  const tagLabel = rawTag === 'all' ? 'All' : rawTag
+  const title = `Notes: ${tagLabel} | NoteHub`
+  const description =
+    rawTag === 'all' ? 'Browse all notes in NoteHub.' : `Browse ${tagLabel} notes in NoteHub.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `/notes/filter/${rawTag}`,
+      images: [
+        {
+          url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
+          width: 1200,
+          height: 630,
+          alt: `NoteHub notes filter - ${tagLabel}`
+        }
+      ]
+    }
+  }
 }
 
 export default async function NotesByCategoryPage({ params, searchParams }: Props) {
@@ -50,7 +99,7 @@ export default async function NotesByCategoryPage({ params, searchParams }: Prop
       <NotesClient
         initialPage={page}
         initialSearch={search}
-        initialTag={tag}
+        tag={tag}
         basePath={`/notes/filter/${rawTag}`}
       />
     </HydrateClient>

@@ -19,14 +19,14 @@ const PER_PAGE = 12
 interface Props {
   initialPage: number
   initialSearch: string
-  initialTag?: NoteTag
+  tag?: NoteTag
   basePath?: string
 }
 
 export default function NotesClient({
   initialPage,
   initialSearch,
-  initialTag,
+  tag,
   basePath = '/notes'
 }: Props) {
   const [page, setPage] = useState(initialPage)
@@ -34,6 +34,14 @@ export default function NotesClient({
 
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  useEffect(() => {
+    setPage(initialPage)
+  }, [initialPage])
+
+  useEffect(() => {
+    setSearch(initialSearch)
+  }, [initialSearch])
 
   useEffect(() => {
     const params = new URLSearchParams()
@@ -46,13 +54,17 @@ export default function NotesClient({
       params.set('search', search)
     }
 
+    if (tag) {
+      params.set('tag', tag)
+    }
+
     const nextUrl = `${basePath}${params.toString() ? `?${params.toString()}` : ''}`
     const currentUrl = `${basePath}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
 
     if (nextUrl !== currentUrl) {
       router.replace(nextUrl)
     }
-  }, [page, search, router, searchParams, basePath])
+  }, [page, search, tag, router, searchParams, basePath])
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setSearch(value)
@@ -60,13 +72,13 @@ export default function NotesClient({
   }, 500)
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['notes', page, search, initialTag],
+    queryKey: ['notes', page, search, tag],
     queryFn: () =>
       fetchNotes({
         page,
         perPage: PER_PAGE,
         search,
-        tag: initialTag
+        tag
       }),
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
@@ -80,7 +92,10 @@ export default function NotesClient({
   return (
     <main className={css.app}>
       <header className={css.toolbar}>
-        <SearchBox onSearch={debouncedSetSearch} />
+        <SearchBox
+          value={search}
+          onSearch={debouncedSetSearch}
+        />
 
         {totalPages > 1 && (
           <Pagination

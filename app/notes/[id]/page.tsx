@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: 'Note not found | NoteHub',
         description: 'This note does not exist.',
         url: `/notes/${id}`,
-        images: ['https://ac.goit.global/fullstack/react/notehub-og-meta.jpg']
+        images: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg'
       }
     }
   }

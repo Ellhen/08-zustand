@@ -1,7 +1,8 @@
+import type { Metadata } from 'next'
 import NoteForm from '@/components/NoteForm/NoteForm'
 import css from './CreateNote.module.css'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Create Note | NoteHub',
   description: 'Create a new note in NoteHub.',
   openGraph: {
