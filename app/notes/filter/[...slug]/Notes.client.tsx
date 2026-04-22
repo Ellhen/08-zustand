@@ -11,10 +11,10 @@ import { SearchBox } from '@/components/SearchBox/SearchBox'
 import Pagination from '@/components/Pagination/Pagination'
 import { NoteList } from '@/components/NoteList/NoteList'
 import { Modal } from '@/components/Modal/Modal'
-import { NoteForm } from '@/components/NoteForm/NoteForm'
+import NoteForm from '@/components/NoteForm/NoteForm'
+import Link from 'next/link'
 
 import css from './NotesPage.module.css'
-
 
 const PER_PAGE = 12
 
@@ -93,13 +93,12 @@ export default function NotesClient({
           />
         )}
 
-        <button
-          type="button"
+        <Link
+          href="/notes/action/create"
           className={css.button}
-          onClick={() => setIsModalOpen(true)}
         >
           Create note +
-        </button>
+        </Link>
       </header>
 
       {isLoading && <p>Loading, please wait...</p>}

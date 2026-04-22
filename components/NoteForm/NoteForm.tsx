@@ -1,118 +1,109 @@
 'use client'
 
-import { ErrorMessage, Field, Form, Formik } from 'formik'
-import * as Yup from 'yup'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { createNote } from '@/lib/api'
-import type { NoteTag } from '@/types/note'
+import { useNoteStore, initialDraft } from '@/lib/store/noteStore'
 import css from './NoteForm.module.css'
+import { NoteTag } from '@/types/note'
 
-interface NoteFormProps {
-  onClose: () => void
-}
-
-interface NoteFormValues {
-  title: string
-  content: string
-  tag: NoteTag
-}
-
-const initialValues: NoteFormValues = {
-  title: '',
-  content: '',
-  tag: 'Todo'
-}
-
-const validationSchema = Yup.object({
-  title: Yup.string()
-    .min(3, 'Minimum 3 characters')
-    .max(50, 'Maximum 50 characters')
-    .required('Title is required'),
-  content: Yup.string().max(500, 'Maximum 500 characters'),
-  tag: Yup.string().required('Tag is required')
-})
-
-export function NoteForm({ onClose }: NoteFormProps) {
+export default function NoteForm() {
+  const router = useRouter()
   const queryClient = useQueryClient()
+
+  const { draft, setDraft, clearDraft } = useNoteStore()
+
+  useEffect(() => {
+    if (!draft) {
+      setDraft(initialDraft)
+    }
+  }, [draft, setDraft])
 
   const mutation = useMutation({
     mutationFn: createNote,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
-      onClose()
+      clearDraft()
+      router.back()
     }
   })
 
-  const handleSubmit = async (values: NoteFormValues) => {
-    await mutation.mutateAsync(values)
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
+    setDraft({ [name]: value })
+  }
+
+  const handleSubmit = async (formData: FormData) => {
+    const data = {
+      title: formData.get('title') as string,
+      content: formData.get('content') as string,
+      tag: formData.get('tag') as NoteTag
+    }
+
+    await mutation.mutateAsync(data)
   }
 
   return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={validationSchema}
-      onSubmit={handleSubmit}
+    <form
+      action={handleSubmit}
+      className={`${css.form} space-y-4`}
     >
-      <Form className={`${css.form} space-y-4`}>
-        <label className={`${css.label} flex flex-col gap-2`}>
-          Title
-          <Field
-            name="title"
-            className={css.input}
-          />
-          <ErrorMessage
-            name="title"
-            component="span"
-            className={css.error}
-          />
-        </label>
+      <label className={`${css.label} flex flex-col gap-2`}>
+        Title
+        <input
+          name="title"
+          value={draft.title}
+          onChange={handleChange}
+          className={css.input}
+        />
+      </label>
 
-        <label className={`${css.label} flex flex-col gap-2`}>
-          Content
-          <Field
-            as="textarea"
-            name="content"
-            className={css.textarea}
-          />
-          <ErrorMessage
-            name="content"
-            component="span"
-            className={css.error}
-          />
-        </label>
+      <label className={`${css.label} flex flex-col gap-2`}>
+        Content
+        <textarea
+          name="content"
+          value={draft.content}
+          onChange={handleChange}
+          className={css.textarea}
+        />
+      </label>
 
-        <label className={`${css.label} flex flex-col gap-2`}>
-          Tag
-          <Field
-            as="select"
-            name="tag"
-            className={css.select}
-          >
-            <option value="Todo">Todo</option>
-            <option value="Work">Work</option>
-            <option value="Personal">Personal</option>
-            <option value="Meeting">Meeting</option>
-            <option value="Shopping">Shopping</option>
-          </Field>
-        </label>
+      <label className={`${css.label} flex flex-col gap-2`}>
+        Tag
+        <select
+          name="tag"
+          value={draft.tag}
+          onChange={handleChange}
+          className={css.select}
+        >
+          <option value="Todo">Todo</option>
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Meeting">Meeting</option>
+          <option value="Shopping">Shopping</option>
+        </select>
+      </label>
 
-        <div className={`${css.actions} flex gap-3`}>
-          <button
-            type="submit"
-            className="cursor-pointer rounded border border-blue-600  px-3 py-1.5 text-base text-blue-600 backdrop-blur-md transition-all duration-200 hover:bg-blue-700 hover:text-white"
-          >
-            Create note
-          </button>
-          <button
-            type="button"
-            className="cursor-pointer rounded bg-[#dc3545] px-3 py-1.5 text-base text-white transition-all duration-200 hover:bg-[#bb2d3b]"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-        </div>
-      </Form>
-    </Formik>
+      <div className={`${css.actions} flex gap-3`}>
+        <button
+          type="submit"
+          className="cursor-pointer rounded border border-blue-600 px-3 py-1.5 text-base text-blue-600 hover:bg-blue-700 hover:text-white"
+        >
+          Create note
+        </button>
+
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="cursor-pointer rounded bg-[#dc3545] px-3 py-1.5 text-base text-white hover:bg-[#bb2d3b]"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
   )
 }
