@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useTransition } from 'react'
+import { useEffect } from 'react'
 
 import { createNote } from '@/lib/api'
 import { useNoteStore, initialDraft } from '@/lib/store/noteStore'
@@ -14,44 +14,47 @@ type NoteFormProps = {
 
 export default function NoteForm({ onClose }: NoteFormProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
   const { draft, setDraft, clearDraft } = useNoteStore()
 
-  const currentDraft = draft ?? initialDraft
+  useEffect(() => {
+    if (!draft) {
+      setDraft(initialDraft)
+    }
+  }, [draft, setDraft])
 
-  const handleFormChange = (e: React.FormEvent<HTMLFormElement>) => {
-    const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    if (!target.name) return
-    setDraft({ [target.name]: target.value })
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
+    setDraft({ [name]: value })
   }
 
-  const handleCreate = async (formData: FormData) => {
+  const handleSubmit = async (formData: FormData) => {
     const data = {
-      title: String(formData.get('title') ?? ''),
-      content: String(formData.get('content') ?? ''),
-      tag: String(formData.get('tag') ?? 'Todo') as NoteTag
+      title: formData.get('title') as string,
+      content: formData.get('content') as string,
+      tag: formData.get('tag') as NoteTag
     }
 
-    startTransition(async () => {
-      await createNote(data)
-      clearDraft()
+    await createNote(data)
 
-      if (onClose) onClose()
-      else router.back()
-    })
+    clearDraft()
+
+    if (onClose) onClose()
+    else router.back()
   }
 
   return (
     <form
-      onChange={handleFormChange}
+      action={handleSubmit}
       className={`${css.form} space-y-4`}
     >
       <label className={`${css.label} flex flex-col gap-2`}>
         Title
         <input
           name="title"
-          value={currentDraft.title}
-          onChange={() => {}}
+          value={draft.title}
+          onChange={handleChange}
           className={css.input}
         />
       </label>
@@ -60,8 +63,8 @@ export default function NoteForm({ onClose }: NoteFormProps) {
         Content
         <textarea
           name="content"
-          value={currentDraft.content}
-          onChange={() => {}}
+          value={draft.content}
+          onChange={handleChange}
           className={css.textarea}
         />
       </label>
@@ -70,8 +73,8 @@ export default function NoteForm({ onClose }: NoteFormProps) {
         Tag
         <select
           name="tag"
-          value={currentDraft.tag}
-          onChange={() => {}}
+          value={draft.tag}
+          onChange={handleChange}
           className={css.select}
         >
           <option value="Todo">Todo</option>
@@ -85,11 +88,9 @@ export default function NoteForm({ onClose }: NoteFormProps) {
       <div className={`${css.actions} flex gap-3`}>
         <button
           type="submit"
-          formAction={handleCreate}
-          disabled={isPending}
-          className="cursor-pointer rounded border border-blue-600 px-3 py-1.5 text-base text-blue-600 hover:bg-blue-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="cursor-pointer rounded border border-blue-600 px-3 py-1.5 text-base text-blue-600 hover:bg-blue-700 hover:text-white"
         >
-          {isPending ? 'Creating...' : 'Create note'}
+          Create note
         </button>
 
         <button

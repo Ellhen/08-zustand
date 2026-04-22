@@ -7,21 +7,26 @@ export const initialDraft = {
   tag: 'Todo'
 }
 
-type Draft = typeof initialDraft
+type NoteDraft = typeof initialDraft
 
 type NoteStore = {
-  draft: Draft
-  setDraft: (note: Partial<Draft>) => void
+  draft: NoteDraft
+  setDraft: (note: Partial<NoteDraft>) => void
   clearDraft: () => void
 }
 
 export const useNoteStore = create<NoteStore>()(
   persist(
-    set => ({
+    (set) => ({
       draft: initialDraft,
-      setDraft: note => set(state => ({ draft: { ...state.draft, ...note } })),
+      setDraft: (note) =>
+        set((state) => ({
+          draft: { ...state.draft, ...note }
+        })),
       clearDraft: () => set({ draft: initialDraft })
     }),
-    { name: 'note-draft' }
+    {
+      name: 'note-draft'
+    }
   )
 )
