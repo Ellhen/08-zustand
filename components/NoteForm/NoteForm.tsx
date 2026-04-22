@@ -1,63 +1,57 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTransition } from 'react'
 
 import { createNote } from '@/lib/api'
 import { useNoteStore, initialDraft } from '@/lib/store/noteStore'
-import css from './NoteForm.module.css'
 import { NoteTag } from '@/types/note'
+import css from './NoteForm.module.css'
 
-export default function NoteForm() {
+type NoteFormProps = {
+  onClose?: () => void
+}
+
+export default function NoteForm({ onClose }: NoteFormProps) {
   const router = useRouter()
-  const queryClient = useQueryClient()
-
+  const [isPending, startTransition] = useTransition()
   const { draft, setDraft, clearDraft } = useNoteStore()
 
-  useEffect(() => {
-    if (!draft) {
-      setDraft(initialDraft)
-    }
-  }, [draft, setDraft])
+  const currentDraft = draft ?? initialDraft
 
-  const mutation = useMutation({
-    mutationFn: createNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] })
-      clearDraft()
-      router.back()
-    }
-  })
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target
-    setDraft({ [name]: value })
+  const handleFormChange = (e: React.FormEvent<HTMLFormElement>) => {
+    const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    if (!target.name) return
+    setDraft({ [target.name]: target.value })
   }
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleCreate = async (formData: FormData) => {
     const data = {
-      title: formData.get('title') as string,
-      content: formData.get('content') as string,
-      tag: formData.get('tag') as NoteTag
+      title: String(formData.get('title') ?? ''),
+      content: String(formData.get('content') ?? ''),
+      tag: String(formData.get('tag') ?? 'Todo') as NoteTag
     }
 
-    await mutation.mutateAsync(data)
+    startTransition(async () => {
+      await createNote(data)
+      clearDraft()
+
+      if (onClose) onClose()
+      else router.back()
+    })
   }
 
   return (
     <form
-      action={handleSubmit}
+      onChange={handleFormChange}
       className={`${css.form} space-y-4`}
     >
       <label className={`${css.label} flex flex-col gap-2`}>
         Title
         <input
           name="title"
-          value={draft.title}
-          onChange={handleChange}
+          value={currentDraft.title}
+          onChange={() => {}}
           className={css.input}
         />
       </label>
@@ -66,8 +60,8 @@ export default function NoteForm() {
         Content
         <textarea
           name="content"
-          value={draft.content}
-          onChange={handleChange}
+          value={currentDraft.content}
+          onChange={() => {}}
           className={css.textarea}
         />
       </label>
@@ -76,8 +70,8 @@ export default function NoteForm() {
         Tag
         <select
           name="tag"
-          value={draft.tag}
-          onChange={handleChange}
+          value={currentDraft.tag}
+          onChange={() => {}}
           className={css.select}
         >
           <option value="Todo">Todo</option>
@@ -91,14 +85,19 @@ export default function NoteForm() {
       <div className={`${css.actions} flex gap-3`}>
         <button
           type="submit"
-          className="cursor-pointer rounded border border-blue-600 px-3 py-1.5 text-base text-blue-600 hover:bg-blue-700 hover:text-white"
+          formAction={handleCreate}
+          disabled={isPending}
+          className="cursor-pointer rounded border border-blue-600 px-3 py-1.5 text-base text-blue-600 hover:bg-blue-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Create note
+          {isPending ? 'Creating...' : 'Create note'}
         </button>
 
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => {
+            if (onClose) onClose()
+            else router.back()
+          }}
           className="cursor-pointer rounded bg-[#dc3545] px-3 py-1.5 text-base text-white hover:bg-[#bb2d3b]"
         >
           Cancel
