@@ -10,8 +10,6 @@ import type { NoteTag } from '@/types/note'
 import { SearchBox } from '@/components/SearchBox/SearchBox'
 import Pagination from '@/components/Pagination/Pagination'
 import { NoteList } from '@/components/NoteList/NoteList'
-import { Modal } from '@/components/Modal/Modal'
-import NoteForm from '@/components/NoteForm/NoteForm'
 import Link from 'next/link'
 
 import css from './NotesPage.module.css'
@@ -33,7 +31,6 @@ export default function NotesClient({
 }: Props) {
   const [page, setPage] = useState(initialPage)
   const [search, setSearch] = useState(initialSearch)
-  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -105,11 +102,12 @@ export default function NotesClient({
       {isError && <p>Something went wrong.</p>}
       {!isLoading && !isError && notes.length > 0 && <NoteList notes={notes} />}
 
-      {isModalOpen && (
-        <Modal onClose={() => setIsModalOpen(false)}>
-          <NoteForm onClose={() => setIsModalOpen(false)} />
-        </Modal>
-      )}
+      <Link
+        href="/notes/action/create"
+        className={css.button}
+      >
+        Create note +
+      </Link>
     </main>
   )
 }
