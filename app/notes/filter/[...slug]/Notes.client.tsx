@@ -101,13 +101,6 @@ export default function NotesClient({
       {isLoading && <p>Loading, please wait...</p>}
       {isError && <p>Something went wrong.</p>}
       {!isLoading && !isError && notes.length > 0 && <NoteList notes={notes} />}
-
-      <Link
-        href="/notes/action/create"
-        className={css.button}
-      >
-        Create note +
-      </Link>
     </main>
   )
 }
